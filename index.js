@@ -34,4 +34,47 @@ app.post("/getUserData", async (req, res) => {
 
   res.send(findUser);
 });
+
+app.post("/updateUser", async (req, res) => {
+  const { email } = req.body;
+
+  const findUser = await userModal.findOne({ email: email });
+
+  if (!findUser) throw new Error("User not registered");
+
+  await userModal.updateOne(
+    { email: email },
+    {
+      $set: {
+        // to set values from req.body
+        phone: req.body.phone,
+      },
+    }
+    // {
+    //   $push: { -- this will create array
+    //     phone: req.body.phone,
+    //   },
+    // }
+    // {
+    //   $addToSet: { -- this will create unique array
+    //     phone: req.body.phone,
+    //   },
+    // }
+    // {
+    //   $pull: {  -- this will remove given value from array
+    //     phone: req.body.phone,
+    //   },
+    // }
+  );
+});
+
+app.post("/deleteUser", async (req, res) => {
+  const { email } = req.body;
+
+  const findUser = await userModal.findOne({ email: email });
+
+  if (!findUser) throw new Error("User not registered");
+
+  await userModal.deleteOne({ email: email });
+});
 app.listen(5500, () => console.log("Server running on port 5500 "));
