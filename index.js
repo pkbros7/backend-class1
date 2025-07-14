@@ -3,6 +3,7 @@ const { json } = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const { userModal } = require("./modals/user");
+const bcrypt = require("bcrypt");
 
 mongoose.connect("mongodb://localhost:27017/testClass").then(() => {
   console.log("db connected successfully");
@@ -15,66 +16,43 @@ app.use(cors());
 
 const arr = [];
 
-app.post("/postData", async (req, res) => {
+app.post("/registerUser", async (req, res) => {
   try {
-    const data = await userModal.create(req.body);
+    const { email, password } = req.body;
 
-    res.send(data);
+    const findUser = await userModal.findOne({ email });
+
+    if (findUser) throw new Error("User already registered");
+
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hashSync(password, salt);
+
+    const createdUser = await userModal.create({
+      ...req.body,
+      password: hashedPassword,
+    });
+
+    res.send({ msg: "User created successfully", data: createdUser });
   } catch (error) {
-    res.send(error);
+    res.send({ err: error.message });
   }
 });
 
-app.post("/getUserData", async (req, res) => {
-  const { email } = req.body;
+app.post("/loginUser", async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-  const findUser = await userModal.findOne({ email: email });
+    const findUser = await userModal.findOne({ email });
 
-  if (!findUser) throw new Error("User not registered");
+    if (!findUser) throw new Error("User not registered");
 
-  res.send(findUser);
-});
+    const compare = await bcrypt.compare(password, findUser.password);
 
-app.post("/updateUser", async (req, res) => {
-  const { email } = req.body;
+    if (!compare) throw new Error("Password incorrect");
 
-  const findUser = await userModal.findOne({ email: email });
-
-  if (!findUser) throw new Error("User not registered");
-
-  await userModal.updateOne(
-    { email: email },
-    {
-      $set: {
-        // to set values from req.body
-        phone: req.body.phone,
-      },
-    }
-    // {
-    //   $push: { -- this will create array
-    //     phone: req.body.phone,
-    //   },
-    // }
-    // {
-    //   $addToSet: { -- this will create unique array
-    //     phone: req.body.phone,
-    //   },
-    // }
-    // {
-    //   $pull: {  -- this will remove given value from array
-    //     phone: req.body.phone,
-    //   },
-    // }
-  );
-});
-
-app.post("/deleteUser", async (req, res) => {
-  const { email } = req.body;
-
-  const findUser = await userModal.findOne({ email: email });
-
-  if (!findUser) throw new Error("User not registered");
-
-  await userModal.deleteOne({ email: email });
+    res.send({ data: findUser });
+  } catch (error) {
+    res.send({ err: error.message });
+  }
 });
 app.listen(5500, () => console.log("Server running on port 5500 "));

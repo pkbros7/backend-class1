@@ -13,6 +13,14 @@ const userModal = new mongoose.Schema({
     type: Number,
     required: false,
   },
+  businessName: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  userName: {
+    type: String,
+  },
 });
 
 module.exports.userModal = mongoose.model("users", userModal);
