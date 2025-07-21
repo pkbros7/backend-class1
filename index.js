@@ -4,6 +4,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const { userModal } = require("./modals/user");
 const bcrypt = require("bcrypt");
+const { addProduct } = require("./controllers/productsControllers");
 
 mongoose.connect("mongodb://localhost:27017/testClass").then(() => {
   console.log("db connected successfully");
@@ -55,4 +56,7 @@ app.post("/loginUser", async (req, res) => {
     res.send({ err: error.message });
   }
 });
+
+app.post("/addProduct", addProduct);
+
 app.listen(5500, () => console.log("Server running on port 5500 "));
